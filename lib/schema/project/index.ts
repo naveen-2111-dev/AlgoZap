@@ -3,11 +3,6 @@ import { AlgorandActionSchema, DiscordConfigSchema, EmailConfigSchema, GitHubCon
 const { Schema } = mongoose;
 
 const NodeSchema = new Schema({
-    _id: {
-        type: Schema.Types.ObjectId,
-        auto: true,
-        default: () => new mongoose.Types.ObjectId()
-    },
     type: {
         type: String,
         enum: ["GitHub", "Discord", "Gmail", "Algorand"],
