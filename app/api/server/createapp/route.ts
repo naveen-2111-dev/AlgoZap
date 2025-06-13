@@ -5,9 +5,16 @@ import getCollection from "@/lib/link/collections";
 
 const SECRET = process.env.NEXT_PUBLIC_JWT_SECRET || 'your-secret-key';
 
+type CreateAppInput = {
+    name: string;
+    sourcePlatform: string;
+    destination: string;
+    webhookSecret: string;
+};
+
 export async function POST(req: Request) {
     try {
-        const { name, sourcePlatform, destination, webhookSecret } = await req.json();
+        const { name, sourcePlatform, destination, webhookSecret } = await req.json() as CreateAppInput;
         const token = (await cookies()).get('token')?.value;
 
         if (!token) {
