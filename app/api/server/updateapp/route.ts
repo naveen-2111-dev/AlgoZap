@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { ObjectId } from "mongodb";
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import getCollection from "@/lib/link/collections";
 
 const SECRET = process.env.NEXT_PUBLIC_JWT_SECRET || 'your-secret-key';
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
             return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
         }
 
-        const decoded: any = jwt.verify(token, SECRET);
+        const decoded = jwt.verify(token, SECRET) as JwtPayload;
         const wallet = decoded.walletId;
 
         if (!wallet || !webhookurl) {
