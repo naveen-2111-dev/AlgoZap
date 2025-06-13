@@ -2,6 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 
+interface AppConfigData {
+    app?: string;
+    username?: string;
+    repository?: string;
+    event?: string;
+    eventLabel?: string;
+}
+
 interface TriggerAppConfigPanelProps {
     app: string;
     savedData?: {
@@ -11,7 +19,7 @@ interface TriggerAppConfigPanelProps {
     };
     onClose: () => void;
     onProceed: () => void;
-    onChange: (data: { [key: string]: any }) => void;
+     onChange: (data: AppConfigData) => void;
 }
 
 export default function TriggerAppConfigPanel({
@@ -61,7 +69,7 @@ export default function TriggerAppConfigPanel({
                         });
                 }
             });
-    }, []);
+    }, [onChange]);
 
     const EVENT_OPTIONS = [
         {

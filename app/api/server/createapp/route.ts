@@ -1,6 +1,6 @@
 export async function POST(req: Request) {
     try {
-        const { userId, name, sourcePlatform, destination, webhookSecret, webhookurl } = await req.json();
+        const {} = await req.json();
         
         return new Response(JSON.stringify({ message: "Success" }), {
             status: 200,
@@ -9,7 +9,7 @@ export async function POST(req: Request) {
             }
         });
     } catch (err) {
-        return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+        return new Response(JSON.stringify({ error: "Internal Server Error",err }), {
             status: 500,
         });
     }
