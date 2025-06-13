@@ -3,9 +3,10 @@ import { AlgorandActionSchema, DiscordConfigSchema, EmailConfigSchema, GitHubCon
 const { Schema } = mongoose;
 
 const NodeSchema = new Schema({
-    id: {
-        type: String,
-        required: true
+    _id: {
+        type: Schema.Types.ObjectId,
+        auto: true,
+        default: () => new mongoose.Types.ObjectId()
     },
     type: {
         type: String,
@@ -31,7 +32,7 @@ const NodeSchema = new Schema({
         type: Date,
         default: () => Date.now()
     }
-}, { _id: false });
+});
 
 const AppSchema = new Schema({
     userId: {

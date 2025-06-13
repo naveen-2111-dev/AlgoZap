@@ -91,12 +91,6 @@ export const AlgorandActionSchema = new Schema({
     assetId: {
         type: Number
     },
-    recipientAddress: {
-        type: String
-    },
-    smartContractId: {
-        type: Number
-    },
     memo: {
         type: String,
         maxlength: 1000
