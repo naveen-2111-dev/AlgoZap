@@ -35,12 +35,20 @@ export async function POST(req: Request) {
         }
 
         const app = await collection.updateOne(
-            { userId: new ObjectId(loggeduser._id) },
-            { $set: { webhookurl: webhookurl } }
+            {
+                userId: new ObjectId(loggeduser._id),
+                sourcePlatform: "GitHub"
+            },
+            {
+                $set: {
+                    "githubConfig.webhookUrl": webhookurl,
+                    updatedAt: new Date()
+                }
+            }
         );
 
         if (app.modifiedCount > 0) {
-            return new Response(JSON.stringify({ message: "Webhook URL updated" }), { status: 200 });
+            return new Response(JSON.stringify({ message: "GitHub Webhook URL updated" }), { status: 200 });
         } else {
             return new Response(JSON.stringify({ message: "No update made" }), { status: 200 });
         }

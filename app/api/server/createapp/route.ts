@@ -2,19 +2,25 @@ import { cookies } from 'next/headers';
 import { ObjectId } from "mongodb"
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import getCollection from "@/lib/link/collections";
+import { CreateAppInput } from '@/lib/types';
 
 const SECRET = process.env.NEXT_PUBLIC_JWT_SECRET || 'your-secret-key';
 
-type CreateAppInput = {
-    name: string;
-    sourcePlatform: string;
-    destination: string;
-    webhookSecret: string;
-};
 
 export async function POST(req: Request) {
     try {
-        const { name, sourcePlatform, destination, webhookSecret } = await req.json() as CreateAppInput;
+        const requestData = await req.json() as CreateAppInput;
+        const {
+            name,
+            description,
+            sourcePlatform,
+            destination,
+            githubConfig,
+            discordConfig,
+            emailConfig,
+            algorandAction,
+        } = requestData;
+
         const token = (await cookies()).get('token')?.value;
 
         if (!token) {
@@ -24,16 +30,74 @@ export async function POST(req: Request) {
         const decoded = jwt.verify(token, SECRET) as JwtPayload;
         const wallet = decoded.walletId;
 
-        if (!name || !sourcePlatform || !destination || !webhookSecret) {
+        if (!name || !sourcePlatform || !destination || !algorandAction) {
             return new Response(JSON.stringify({ error: "Missing required fields" }), {
+                status: 400,
+            });
+        }
+
+        let platformConfig: any = {};
+        let webhookUrl = '';
+
+        switch (sourcePlatform) {
+            case 'GitHub':
+                if (!githubConfig || !githubConfig.webhookSecret || !githubConfig.repository) {
+                    return new Response(JSON.stringify({ error: "GitHub configuration is incomplete" }), {
+                        status: 400,
+                    });
+                }
+                platformConfig.githubConfig = {
+                    ...githubConfig,
+                    webhookUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://algo-zap-iq98.vercel.app'}/api/webhook/PLACEHOLDER_ID`
+                };
+                break;
+
+            case 'Discord':
+                if (!discordConfig || !discordConfig.botToken || !discordConfig.guildId) {
+                    return new Response(JSON.stringify({ error: "Discord configuration is incomplete" }), {
+                        status: 400,
+                    });
+                }
+                platformConfig.discordConfig = discordConfig;
+                break;
+
+            case 'Gmail':
+                if (!emailConfig || !emailConfig.emailAddress || !emailConfig.oauthToken) {
+                    return new Response(JSON.stringify({ error: "Gmail configuration is incomplete" }), {
+                        status: 400,
+                    });
+                }
+                platformConfig.emailConfig = emailConfig;
+                break;
+
+            default:
+                return new Response(JSON.stringify({ error: "Invalid source platform" }), {
+                    status: 400,
+                });
+        }
+
+        const validActionTypes = ["send_token", "send_nft", "create_asset", "opt_in", "smart_contract_call"];
+        if (!validActionTypes.includes(algorandAction.actionType)) {
+            return new Response(JSON.stringify({ error: "Invalid Algorand action type" }), {
                 status: 400,
             });
         }
 
         const collection = await getCollection("PROJECTS");
         const user = await getCollection("LOGIN");
-        const existingApp = await collection.findOne({ name });
+
+        const existingApp = await collection.findOne({
+            name: name,
+            userId: { $exists: true }
+        });
+
         const loggeduser = await user.findOne({ walletid: wallet });
+
+        if (!loggeduser) {
+            return new Response(JSON.stringify({ error: "User not found" }), {
+                status: 404,
+            });
+        }
 
         if (existingApp) {
             return new Response(JSON.stringify({ error: "App name already exists" }), {
@@ -41,22 +105,101 @@ export async function POST(req: Request) {
             });
         }
 
-        const app = await collection.insertOne({
-            userId: new ObjectId(loggeduser?._id),
+        const appDocument = {
+            userId: new ObjectId(loggeduser._id),
             name: name,
+            description: description || '',
             sourcePlatform: sourcePlatform,
             destination: destination,
-            webhookSecret: webhookSecret,
-            createdAt: new Date()
-        });
+            isActive: true,
+            ...platformConfig,
+            algorandAction: algorandAction,
+            triggerCount: 0,
+            totalAlgoSent: 0,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
 
-        if (app.insertedId)
-            return new Response(JSON.stringify({ message: "Success" }), {
+        const app = await collection.insertOne(appDocument);
+
+        if (app.insertedId) {
+            if (sourcePlatform === 'GitHub') {
+                const actualWebhookUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://algo-zap-iq98.vercel.app'}/api/webhook/${app.insertedId}`;
+
+                await collection.updateOne(
+                    { _id: app.insertedId },
+                    {
+                        $set: {
+                            'githubConfig.webhookUrl': actualWebhookUrl,
+                            updatedAt: new Date()
+                        }
+                    }
+                );
+
+                return new Response(JSON.stringify({
+                    message: "Success",
+                    appId: app.insertedId,
+                    webhookUrl: actualWebhookUrl
+                }), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+
+            return new Response(JSON.stringify({
+                message: "Success",
+                appId: app.insertedId
+            }), {
                 status: 200,
                 headers: { 'Content-Type': 'application/json' }
             });
+        }
+
+        return new Response(JSON.stringify({ error: "Failed to create app" }), {
+            status: 500,
+        });
+
     } catch (err) {
         console.error("App creation error:", err);
+        return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+            status: 500,
+        });
+    }
+}
+
+export async function GET(req: Request) {
+    try {
+        const token = (await cookies()).get('token')?.value;
+
+        if (!token) {
+            return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+        }
+
+        const decoded = jwt.verify(token, SECRET) as JwtPayload;
+        const wallet = decoded.walletId;
+
+        const collection = await getCollection("PROJECTS");
+        const user = await getCollection("LOGIN");
+
+        const loggeduser = await user.findOne({ walletid: wallet });
+
+        if (!loggeduser) {
+            return new Response(JSON.stringify({ error: "User not found" }), {
+                status: 404,
+            });
+        }
+
+        const apps = await collection.find({
+            userId: new ObjectId(loggeduser._id)
+        }).toArray();
+
+        return new Response(JSON.stringify({ apps }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+    } catch (err) {
+        console.error("Fetch apps error:", err);
         return new Response(JSON.stringify({ error: "Internal Server Error" }), {
             status: 500,
         });
