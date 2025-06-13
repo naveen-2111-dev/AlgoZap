@@ -71,6 +71,7 @@ export default function CreateUser() {
         const data = await res.json();
         console.log('✅ Register success:', data);
         alert('User created!');
+        router.push('/home'); // Redirect to home or another page after successful registration
     };
 
     return (

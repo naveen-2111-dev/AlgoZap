@@ -55,7 +55,16 @@ export default function HomePage() {
           {user ? (
             <div className="text-lg font-mono space-y-2 text-center">
               <p>
+                <strong>Username:</strong>{' '}
                 <span className="text-blue-600 dark:text-blue-400">{user.username}</span>
+              </p>
+              <p>
+                <strong>Email:</strong>{' '}
+                <span className="text-green-600 dark:text-green-400">{user.email}</span>
+              </p>
+              <p>
+                <strong>Wallet:</strong>{' '}
+                <span className="text-purple-600 dark:text-purple-400">{user.walletid}</span>
               </p>
             </div>
           ) : (
