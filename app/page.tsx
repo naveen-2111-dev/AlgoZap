@@ -20,48 +20,71 @@ export default function Home() {
       });
   }, []);
 
-  const handleConnect = async () => {
-    if (!Lute) {
-      alert('LuteConnect not ready yet');
-      return;
-    }
+const handleConnect = async () => {
+  if (!Lute) {
+    alert('LuteConnect not ready yet');
+    return;
+  }
 
-    try {
-      const lute = new Lute('MyApp');
-      const accounts = await lute.connect('mainnet-v1.0');
+  try {
+    const lute = new Lute('MyApp');
+    const accounts = await lute.connect('mainnet-v1.0');
 
-      if (accounts && accounts.length > 0) {
-        const walletAddress = accounts[0];
-        setAddress(walletAddress);
-        localStorage.setItem('walletAddress', walletAddress); // ✅ Save to localStorage
-        console.log('Connected Wallet Address:', walletAddress);
+    if (accounts && accounts.length > 0) {
+      const walletAddress = accounts[0];
+      setAddress(walletAddress);
+      localStorage.setItem('walletAddress', walletAddress);
 
+      // ✅ Send login request
+      const loginRes = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ walletId: walletAddress }),
+      });
+
+      const loginData = await loginRes.json();
+
+      if (loginRes.ok && loginData.success) {
+        console.log('✅ Login successful');
+        router.push('/home');
+      } else if (loginRes.status === 404) {
+        // Wallet not found → redirect to create-user
+        console.log('🚫 Wallet not found. Redirecting to create-user...');
         setTimeout(() => {
           router.push('/create-user');
         }, 1000);
       } else {
-        alert('No account found in Lute Wallet.');
+        console.error('Login failed:', loginData.message);
+        alert('Login failed: ' + loginData.message);
       }
-    } catch (err: any) {
-      console.error('Lute connection failed:', err);
-
-      const isChrome =
-        navigator.userAgent.includes('Chrome') &&
-        !navigator.userAgent.includes('Edg') &&
-        !navigator.userAgent.includes('OPR');
-
-      if (isChrome) {
-        const goToDownload = confirm(
-          'Lute Wallet extension might not be installed.\nDo you want to go to the install page?'
-        );
-        if (goToDownload) {
-          window.open('https://lute.app/', '_blank');
-        }
-      } else {
-        alert(`Connection failed: ${err.message || err}`);
-      }
+    } else {
+      alert('No account found in Lute Wallet.');
     }
-  };
+  } catch (err: any) {
+    console.error('Lute connection failed:', err);
+
+    const isChrome =
+      navigator.userAgent.includes('Chrome') &&
+      !navigator.userAgent.includes('Edg') &&
+      !navigator.userAgent.includes('OPR');
+
+    if (isChrome) {
+      const goToDownload = confirm(
+        'Lute Wallet extension might not be installed.\nDo you want to go to the install page?'
+      );
+      if (goToDownload) {
+        window.open('https://lute.app/', '_blank');
+      }
+    } else {
+      alert(`Connection failed: ${err.message || err}`);
+    }
+  }
+};
+
+
+
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-black gap-4">
