@@ -4,9 +4,15 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
+  
+  type LuteConstructor = new (appName: string) => {
+  connect: (network: string) => Promise<string[]>;
+};
+
   const [address, setAddress] = useState<string | null>(null);
   const [isFirefox, setIsFirefox] = useState(false);
-  const [Lute, setLute] = useState<any>(null);
+  const [Lute, setLute] = useState<LuteConstructor | null>(null);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -62,7 +68,7 @@ const handleConnect = async () => {
     } else {
       alert('No account found in Lute Wallet.');
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Lute connection failed:', err);
 
     const isChrome =
@@ -78,7 +84,13 @@ const handleConnect = async () => {
         window.open('https://lute.app/', '_blank');
       }
     } else {
-      alert(`Connection failed: ${err.message || err}`);
+      alert(
+        `Connection failed: ${
+          typeof err === 'object' && err !== null && 'message' in err
+            ? (err as { message?: string }).message
+            : String(err)
+        }`
+      );
     }
   }
 };

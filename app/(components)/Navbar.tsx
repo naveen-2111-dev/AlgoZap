@@ -21,7 +21,7 @@ export default function Navbar() {
           setUser({ username: data.user.username, email: data.user.email });
         }
       } catch (error) {
-        console.error('Failed to fetch user data');
+        console.error('Failed to fetch user data',error);
       }
     }
 

@@ -13,8 +13,9 @@ export default function CreateUser() {
         password: '',
     });
 
+    
+    
     const snakeNames = ['cobra', 'viper', 'python', 'anaconda', 'rattler', 'boa', 'krait', 'mamba'];
-
     const generateUsername = (wallet: string) => {
         const randomSnake = snakeNames[Math.floor(Math.random() * snakeNames.length)];
         const shortHash = wallet.slice(-4);
