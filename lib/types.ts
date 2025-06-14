@@ -67,6 +67,6 @@ export type CreateAppInput = {
     githubConfig?: GitHubConfig;
     discordConfig?: DiscordConfig;
     emailConfig?: EmailConfig;
-
+    newAppId?: string,
     algorandAction: AlgorandAction;
 };

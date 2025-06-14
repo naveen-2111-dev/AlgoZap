@@ -1,19 +1,67 @@
-export const runtime = "nodejs";
-
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import getCollection from "@/lib/link/collections";
 import crypto from "crypto";
+import algosdk from "algosdk";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const algodClient = new algosdk.Algodv2(
+    "",
+    "https://testnet-api.algonode.cloud",
+    ""
+);
+
+async function triggerAlgorandPayment(recipient: string, amount: number): Promise<void> {
+    try {
+        const senderMnemonic = process.env.DEPLOYER_MNEMONIC;
+        if (!senderMnemonic) {
+            throw new Error("DEPLOYER_MNEMONIC environment variable is not set");
+        }
+
+        const senderAccount = algosdk.mnemonicToSecretKey(senderMnemonic);
+        const triggerAppId = 741185305; // Replace with your actual trigger app ID
+
+        const suggestedParams = await algodClient.getTransactionParams().do();
+
+        const atc = new algosdk.AtomicTransactionComposer();
+        const method = new algosdk.ABIMethod({
+            name: "trigger_payment",
+            args: [
+                { type: "address", name: "recipient" },
+                { type: "uint64", name: "amount" },
+            ],
+            returns: { type: "string" },
+        });
+
+        atc.addMethodCall({
+            appID: triggerAppId,
+            method,
+            methodArgs: [recipient, amount],
+            sender: senderAccount.addr,
+            suggestedParams,
+            signer: async (txns: algosdk.Transaction[]) => {
+                return txns.map(txn => txn.signTxn(senderAccount.sk));
+            },
+        });
+
+        const result = await atc.execute(algodClient, 4);
+        console.log("Payment triggered successfully:", result.methodResults[0].returnValue);
+    } catch (error) {
+        console.error("Error triggering payment:", error);
+        throw error;
+    }
+}
 
 export async function POST(
     req: NextRequest,
-    context: { params: Promise<{ workflowid: string; workflowname: string }> }
+    context: { params: { workflowid: string; workflowname: string } }
 ) {
     try {
-        const params = await context.params;
+        const { workflowid: workflowId, workflowname } = context.params;
         const signature = req.headers.get("x-hub-signature-256") || "";
         const event = req.headers.get("x-github-event") || "";
-        const { workflowid: workflowId, workflowname } = params;
 
         const contributedUser = await getCollection("LOGIN");
         if (!workflowId) {
@@ -29,7 +77,7 @@ export async function POST(
 
         let rawBody = "";
         try {
-            rawBody = await req.text(); 
+            rawBody = await req.text();
         } catch (err) {
             console.error("Failed to read raw body:", err);
             return NextResponse.json({ error: "Cannot read body" }, { status: 400 });
@@ -56,19 +104,32 @@ export async function POST(
         switch (workflowname) {
             case "github":
                 switch (event) {
-                    case "pull_request": {
-                        const contributor = body.pull_request?.user?.login;
-                        const user1 = await contributedUser.findOne({ github: contributor });
-                        return NextResponse.json({ walletId: user1?.walletid || null });
+            case "pull_request": {
+                const contributor = body.pull_request?.user?.login;
+                const id = await contributedUser.findOne({ github: contributor });
+
+                if (id && id._id) {
+                    const user = await collection.findOne({ _id: new ObjectId(id._id) });
+                    if (user?.walletid) {
+                        await triggerAlgorandPayment(user.walletid, 1000000);
+                        return NextResponse.json({
+                            message: "Payment triggered successfully",
+                            recipient: user.walletid
+                        });
                     }
-                    case "push": {
-                        const pusher = body.pusher?.name || body.head_commit?.author?.name;
-                        const user2 = await contributedUser.findOne({ github: pusher });
-                        return NextResponse.json({ walletId: user2?.walletid || null });
-                    }
-                    default:
-                        return NextResponse.json({ message: "Unhandled GitHub event" });
                 }
+                return NextResponse.json({
+                    message: "No eligible contributor found for payment"
+                });
+            }
+            case "push": {
+                const pusher = body.pusher?.name || body.head_commit?.author?.name;
+                const user = await contributedUser.findOne({ github: pusher });
+                return NextResponse.json({ walletId: user?.walletid || null });
+            }
+            default:
+                return NextResponse.json({ message: "Unhandled GitHub event" });
+        }
 
             case "discard":
                 return NextResponse.json({ message: "Discard webhook received" });
@@ -84,3 +145,5 @@ export async function POST(
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
+
+export const runtime = "nodejs";

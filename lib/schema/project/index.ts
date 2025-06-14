@@ -59,6 +59,17 @@ const AppSchema = new Schema({
         default: true
     },
 
+    algorandAppId: {
+        type: Number,
+        required: true,
+        index: true
+    },
+
+    algorandContractAddress: {
+        type: String,
+        required: false
+    },
+
     githubConfig: {
         type: GitHubConfigSchema,
         required: function (this: { sourcePlatform: string }) { return this.sourcePlatform === "GitHub"; }
@@ -105,6 +116,7 @@ const AppSchema = new Schema({
 });
 
 AppSchema.index({ userId: 1, sourcePlatform: 1 });
+AppSchema.index({ algorandAppId: 1 });
 AppSchema.index({ "githubConfig.repository": 1 });
 AppSchema.index({ "discordConfig.guildId": 1 });
 AppSchema.index({ "emailConfig.emailAddress": 1 });
@@ -132,6 +144,10 @@ AppSchema.methods.recordTrigger = function (algoAmount = 0) {
 
 AppSchema.statics.findByPlatform = function (platform) {
     return this.find({ sourcePlatform: platform, isActive: true });
+};
+
+AppSchema.statics.findByAlgorandAppId = function (appId) {
+    return this.findOne({ algorandAppId: appId, isActive: true });
 };
 
 export default mongoose.model("projects", AppSchema);

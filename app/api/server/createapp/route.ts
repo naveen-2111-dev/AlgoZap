@@ -18,6 +18,7 @@ export async function POST(req: Request) {
             discordConfig,
             emailConfig,
             algorandAction,
+            newAppId
         } = requestData;
 
         const token = (await cookies()).get('token')?.value;
@@ -37,17 +38,17 @@ export async function POST(req: Request) {
 
         const platformConfig: {
             githubConfig?: {
-            webhookSecret: string;
-            repository: string;
-            webhookUrl: string;
+                webhookSecret: string;
+                repository: string;
+                webhookUrl: string;
             };
             discordConfig?: {
-            botToken: string;
-            guildId: string;
+                botToken: string;
+                guildId: string;
             };
             emailConfig?: {
-            emailAddress: string;
-            oauthToken: string;
+                emailAddress: string;
+                oauthToken: string;
             };
         } = {};
 
@@ -128,6 +129,7 @@ export async function POST(req: Request) {
             algorandAction: algorandAction,
             triggerCount: 0,
             totalAlgoSent: 0,
+            algorandAppId: newAppId,
             createdAt: new Date(),
             updatedAt: new Date()
         };

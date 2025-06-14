@@ -41,7 +41,6 @@ const handleConnect = async () => {
       setAddress(walletAddress);
       localStorage.setItem('walletAddress', walletAddress);
 
-      // ✅ Send login request
       const loginRes = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
