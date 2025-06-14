@@ -7,7 +7,7 @@ import { CreateAppInput } from '@/lib/types';
 const SECRET = process.env.NEXT_PUBLIC_JWT_SECRET || 'your-secret-key';
 
 export async function POST(req: Request) {
-
+    try {
         const requestData = await req.json() as CreateAppInput;
         const {
             name,
@@ -101,7 +101,6 @@ export async function POST(req: Request) {
         const existingApp = await collection.findOne({
             name: name,
             userId: { $exists: true }
-
         });
 
         const loggeduser = await user.findOne({ walletid: wallet });
@@ -171,8 +170,8 @@ export async function POST(req: Request) {
         return new Response(JSON.stringify({ error: "Failed to create app" }), {
             status: 500,
         });
+
     } catch (err) {
-        return new Response(JSON.stringify({ error: "Internal Server Error",err }), {
         console.error("App creation error:", err);
         return new Response(JSON.stringify({ error: "Internal Server Error" }), {
             status: 500,
