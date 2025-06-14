@@ -2,16 +2,13 @@
 
 <div align="center">
 
-![AlgoZap Logo](https://via.placeholder.com/200x80/4A90E2/FFFFFF?text=AlgoZap)
-
 **Seamless Web3 Integration & Automation Platform**
 
 [![Web3](https://img.shields.io/badge/Web3-Automation-4A90E2?style=for-the-badge&logo=ethereum)](https://github.com/algozap/algozap)
-[![Authentication](https://img.shields.io/badge/Auth-MultiMethod-50C878?style=for-the-badge&logo=shield)](https://github.com/algozap/algozap)
+[![Authentication](https://img.shields.io/badge/Auth--50C878?style=for-the-badge&logo=shield)](https://github.com/algozap/algozap)
 [![Node](https://img.shields.io/badge/Node-18+-339933?style=for-the-badge&logo=node.js)](https://nodejs.org)
 [![MongoDB](https://img.shields.io/badge/MongoDB-6+-47A248?style=for-the-badge&logo=mongodb)](https://mongodb.com)
 
-[🌟 Features](#-features) • [📦 Installation](#-installation) • [🔧 API Docs](#-api-documentation) • [🎯 Examples](#-examples) • [🤝 Contributing](#-contributing)
 
 ---
 
@@ -27,7 +24,6 @@ AlgoZap revolutionizes Web3 application development by providing a comprehensive
 - **⚡ Event-Driven Architecture**: Real-time webhook integration for seamless automation
 - **🔗 Cross-Platform Integration**: Connect any application to the Algorand blockchain
 - **🛡️ Enterprise Security**: Multi-layer security with wallet binding and secure token management
-- **📈 Scalable Infrastructure**: Built for high-performance applications
 
 ---
 
@@ -40,7 +36,6 @@ AlgoZap revolutionizes Web3 application development by providing a comprehensive
 | 🔑 **Multi-Auth System** | Email, Wallet & Username authentication | ✅ Production Ready |
 | 🔗 **Wallet Binding** | Secure wallet-to-application association | ✅ Production Ready |
 | 🎣 **Webhook Engine** | Real-time event processing and automation | ✅ Production Ready |
-| 📊 **Analytics Dashboard** | Comprehensive usage and performance metrics | 🚧 Beta |
 | 🔒 **Security Suite** | Advanced encryption and access control | ✅ Production Ready |
 
 ### Blockchain Integration
@@ -94,40 +89,10 @@ npm run dev
 AlgoZap supports multiple authentication methods to suit different use cases:
 
 ### 1. Email Authentication
-```javascript
-const response = await fetch('/api/auth/email', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    email: 'user@example.com',
-    password: 'securePassword123'
-  })
-});
-```
 
 ### 2. Wallet Authentication
-```javascript
-const response = await fetch('/api/auth/wallet', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    walletAddress: 'ALGORAND_WALLET_ADDRESS',
-    signature: 'SIGNED_MESSAGE'
-  })
-});
-```
 
-### 3. Username Authentication
-```javascript
-const response = await fetch('/api/auth/username', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    username: 'johndoe',
-    password: 'securePassword123'
-  })
-});
-```
+---
 
 ### 📚 Progressive Tasks
 
@@ -138,18 +103,8 @@ Enhance your tokens with rich metadata and advanced controls.
 - Asset metadata standards
 - Freeze/clawback mechanisms
 - Asset management best practices
-
-**Example:**
-```javascript
-const advancedTokenConfig = {
-  ...tokenConfig,
-  metadataHash: 'QmHashOfYourMetadata',
-  url: 'https://algozap.com/token/metadata',
-  manager: managerWallet.address,
-  freeze: freezeWallet.address,
-  clawback: clawbackWallet.address
-};
-```
+  
+---
 
 #### 3. ⚡ **Advanced: Smart Contract Tokenization**
 Build tokens with programmable logic using PyTeal.
@@ -159,18 +114,7 @@ Build tokens with programmable logic using PyTeal.
 - Conditional transfers
 - Automated token distribution
 
-**PyTeal Example:**
-```python
-from pyteal import *
-
-def token_contract():
-    return Seq([
-        Assert(Txn.type_enum() == TxnType.AssetTransfer),
-        Assert(Txn.asset_amount() <= Int(1000)),
-        Assert(Global.latest_timestamp() >= Int(1640995200)),
-        Approve()
-    ])
-```
+---
 
 #### 5. 🌐 **Integration: Application Integration**
 Connect your tokens to real-world applications.
@@ -180,25 +124,7 @@ Connect your tokens to real-world applications.
 - Webhook implementation
 - User experience design
 
-**Integration Example:**
-```javascript
-// E-commerce integration
-app.post('/payment/token', async (req, res) => {
-  const { amount, productId, userWallet } = req.body;
-  
-  const payment = await processTokenPayment({
-    from: userWallet,
-    to: merchantWallet,
-    amount: amount,
-    assetId: ZAP_TOKEN_ID,
-    metadata: { productId, orderId: generateOrderId() }
-  });
-  
-  // Trigger webhook
-  await triggerWebhook('payment.completed', payment);
-  res.json({ success: true, transactionId: payment.txId });
-});
-```
+---
 
 **Architecture Overview:**
 ```mermaid
